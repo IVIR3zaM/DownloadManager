@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         bootstrap="./tests/bootstrap.php">
+    <testsuites>
+        <testsuite name="Proxies">
+            <file>tests/ProxiesTest.php</file>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist>
+            <file>src/Proxies.php</file>
+            <file>src/Proxy.php</file>
+        </whitelist>
+        <!--<whitelist>-->
+            <!--<directory suffix=".php">src</directory>-->
+            <!--<exclude>-->
+                <!--<directory suffix="Interface.php">src</directory>-->
+                <!--<directory suffix="Exception.php">src</directory>-->
+                <!--&lt;!&ndash;<directory prefix="Abstract">src</directory>&ndash;&gt;-->
+            <!--</exclude>-->
+        <!--</whitelist>-->
+    </filter>
+</phpunit>

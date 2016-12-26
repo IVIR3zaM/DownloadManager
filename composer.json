@@ -1,0 +1,31 @@
+{
+  "name": "ivir3zam/download-manager",
+  "type": "library",
+  "description": "Multi thread download management system with proxy support",
+  "keywords": [
+    "download-manager",
+    "download-management",
+    "multi-thread"
+  ],
+  "homepage": "https://ivir3zam.github.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Mohammad Reza Maghoul",
+      "email": "m.reza.maghool@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.4",
+    "ext-pcntl": "*",
+    "ext-curl": "*",
+    "ivir3zam/object-array-tools": ">=1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "IVIR3aM\\DownloadManager\\": "src",
+      "IVIR3aM\\DownloadManager\\Tests\\": "tests"
+    }
+  },
+  "minimum-stability": "dev"
+}
