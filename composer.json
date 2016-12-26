@@ -19,7 +19,7 @@
     "php": ">=5.4",
     "ext-pcntl": "*",
     "ext-curl": "*",
-    "ivir3zam/object-array-tools": ">=1.1"
+    "ivir3zam/object-array-tools": "dev-master"
   },
   "autoload": {
     "psr-4": {
