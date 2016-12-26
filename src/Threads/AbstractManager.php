@@ -4,7 +4,6 @@ namespace IVIR3aM\DownloadManager\Threads;
 use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
 use IVIR3aM\DownloadManager\Manager as DownloadManager;
 use IVIR3aM\DownloadManager\Files;
-use IVIR3aM\DownloadManager\Proxy;
 
 abstract class AbstractManager extends AbstractActiveArray
 {
@@ -73,7 +72,7 @@ abstract class AbstractManager extends AbstractActiveArray
             return false;
         }
         if (!$file->isCompleted()) {
-            $thread = $this->createThread($file, $this->getManager()->getProxy(), $index);
+            $thread = $this->createThread($file, $index);
             if (!$this->threadIsValid($thread)) {
                 throw new \Exception('Invalid thread returned from createThread() method');
             }
@@ -86,10 +85,8 @@ abstract class AbstractManager extends AbstractActiveArray
     public function stop($index)
     {
         if (isset($this[$index])) {
-            $proxy = $this[$index]->getProxy();
             $this->destroyThread($index);
             unset($this[$index]);
-            $this->getManager()->freeProxy($proxy);
         }
         return $this;
     }
@@ -108,18 +105,10 @@ abstract class AbstractManager extends AbstractActiveArray
     {
         $this->getManager()->output($file, $data, $position);
     }
-
-    protected function endThread($index)
-    {
-        $proxy = $this[$index]->getProxy();
-        $this->destroyThread($index);
-        unset($this[$index]);
-        $this->getManager()->freeProxy($proxy);
-    }
     
     protected function errorThread($index)
     {
-        $this->endThread($index);
+        $this->stop($index);
         unset($this[$index]);
         $file = $this->getManager()->getFileByIndex($index);
         if ($this->fileIsValid($file)) {
@@ -131,7 +120,7 @@ abstract class AbstractManager extends AbstractActiveArray
 
     protected function successThread($index)
     {
-        $this->endThread($index);
+        $this->stop($index);
         unset($this[$index]);
         $file = $this->getManager()->getFileByIndex($index);
         if ($this->fileIsValid($file)) {
@@ -156,11 +145,10 @@ abstract class AbstractManager extends AbstractActiveArray
      * that the job was successful, then parent can call successMethod() to continue the proccess
      * of downloading the file.
      * @param Files $file
-     * @param Proxy $proxy
      * @param mixed $index
      * @return AbstractThread
      */
-    abstract protected function createThread(Files $file, Proxy $proxy, $index);
+    abstract protected function createThread(Files $file, $index);
 
     /**
      * this is the logic of destroying a single thread

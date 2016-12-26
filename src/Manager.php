@@ -60,14 +60,12 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     protected function insertHook($index, Files $file)
     {
-        // TODO: pause check must implemented
         $file->attach($this);
         $this->start($index);
     }
 
     protected function removeHook($index, Files $file)
     {
-        // TODO: pause check must implemented
         $this->stop($index);
         $file->detach($this);
     }
@@ -119,12 +117,35 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         $this->active = boolval($active);
     }
 
+    private function initializeFile(Files $file)
+    {
+        if (!$file->getRunning() && $file->getActive()) {
+            if (!$file->getProxy()->isUsable()) {
+                $file->setProxy($this->getRandomProxy());
+            }
+            if (!$file->getClient()) {
+                $file->setClient(new HttpClient($file));
+            }
+        }
+    }
+
     public function start($index = null)
     {
         if (!$this->active || !$this->setupCompleted) {
             return false;
         }
-        return boolval(is_null($index) ? $this->getThreadsManager()->startDownloads() : $this->getThreadsManager()->start($index));
+        if (is_null($index)) {
+            foreach ($this->getFiles() as $file) {
+                $this->initializeFile($file);
+            }
+            $result = $this->getThreadsManager()->startDownloads();
+        } elseif (($file = $this->getFileByIndex($index))) {
+            $this->initializeFile($file);
+            $result = $this->getThreadsManager()->start($index);
+        } else {
+            $result = false;
+        }
+        return boolval($result);
     }
 
     public function stop($index = null)
@@ -184,9 +205,9 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return $this->proxies;
     }
 
-    public function getProxy()
+    public function getRandomProxy()
     {
-        return $this->getProxies() ? $this->getProxies()->getProxy() : new Proxy();
+        return $this->getProxies() ? $this->getProxies()->getRandomProxy() : new Proxy();
     }
 
     public function freeProxy(Proxy $proxy)

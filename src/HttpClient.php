@@ -9,11 +9,6 @@ class HttpClient
     private $file;
 
     /**
-     * @var Proxy
-     */
-    private $proxy;
-
-    /**
      * @var int
      */
     private $timeout;
@@ -47,9 +42,8 @@ class HttpClient
     const ONLY_HEAD = 1;
     const ONLY_BODY = 2;
 
-    public function __construct(Files $file, Proxy $proxy, $cookieFilePath = '', $timeout = 60, $redirects = 5)
+    public function __construct(Files $file, $cookieFilePath = '', $timeout = 60, $redirects = 5)
     {
-        $this->setProxy($proxy);
         $this->setCookieFile($cookieFilePath);
         $this->setTimeout($timeout);
         $this->setRedirects($redirects);
@@ -81,13 +75,7 @@ class HttpClient
 
     public function getProxy()
     {
-        return $this->proxy;
-    }
-
-    public function setProxy(Proxy $proxy)
-    {
-        $this->proxy = $proxy;
-        return $this;
+        return $this->getFile()->getProxy();
     }
 
     public function getTimeout()

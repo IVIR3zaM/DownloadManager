@@ -23,10 +23,9 @@ class Manager extends AbstractManager
         return count($this->pid);
     }
 
-    public function createThread(Files $file, Proxy $proxy, $index)
+    public function createThread(Files $file, $index)
     {
-        $thread = new Thread(new HttpClient($file, $proxy));
-        $c = $this->getManager()->observers->count();
+        $thread = new Thread($file->getClient());
         $pid = pcntl_fork();
         if ($pid == -1) {
             throw new \Exception('Pcntl fork failed');

@@ -30,7 +30,7 @@ class Proxies extends AbstractActiveArray
         return $data;
     }
 
-    public function getProxy()
+    public function getRandomProxy()
     {
         if (count($this) && ($key = $this->array_rand(1)) !== false) {
             $proxy = $this[$key];

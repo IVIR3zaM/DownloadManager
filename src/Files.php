@@ -9,7 +9,7 @@ use SplObjectStorage;
 
 class Files extends AbstractActiveArray implements SplSubject
 {
-    const FIELDS = ['link', 'size', 'maxSpeed', 'speed', 'position', 'headers', 'running', 'active'];
+    const FIELDS = ['link', 'size', 'maxSpeed', 'speed', 'position', 'headers', 'running', 'active', 'proxy', 'client'];
     const INTEGER_FIELDS = ['size', 'maxSpeed', 'position', 'speed'];
     private $stepLength = 0;
 
@@ -43,6 +43,11 @@ class Files extends AbstractActiveArray implements SplSubject
     protected function filterInputHook($offset, $value)
     {
         $result = in_array($offset, self::FIELDS);
+        if ($offset == 'proxy') {
+            $result = is_a($value, Proxy::class);
+        } elseif ($offset == 'client') {
+            $result = is_a($value, HttpClient::class);
+        }
         return $result;
     }
 
@@ -107,6 +112,34 @@ class Files extends AbstractActiveArray implements SplSubject
     protected function setOuterChange()
     {
         $this->changeType = Changes::OUTER;
+    }
+
+    public function getProxy()
+    {
+        if (!isset($this['proxy']) || !is_a($this['proxy'], Proxy::class)) {
+            $this->setInnerChange();
+            $this['proxy'] = new Proxy();
+        }
+        return $this['proxy'];
+    }
+
+    public function setProxy(Proxy $proxy)
+    {
+        $this->setInnerChange();
+        $this['proxy'] = $proxy;
+        return $this;
+    }
+
+    public function getClient()
+    {
+        return $this['client'];
+    }
+
+    public function setClient(HttpClient $client)
+    {
+        $this->setInnerChange();
+        $this['client'] = $client;
+        return $this;
     }
 
     public function getLink()
