@@ -282,7 +282,10 @@ class Files extends AbstractActiveArray implements SplSubject
 
     public function isCompleted()
     {
-        return isset($this['size']) && $this->getPosition() >= $this->getSize();
+        if (!isset($this['size']) && $this->getClient()) {
+            $this->getClient()->getInfo();
+        }
+        return $this->getPosition() >= $this->getSize();
     }
 
     public function moveForward()
