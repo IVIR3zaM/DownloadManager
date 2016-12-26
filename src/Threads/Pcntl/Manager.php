@@ -53,7 +53,6 @@ class Manager extends AbstractManager
     {
         $pid = pcntl_waitpid(-1, $status, WNOHANG);
         while ($pid > 0) {
-            var_dump($this->pid);
             $code = pcntl_wexitstatus($status);
             if (($index = array_search($pid, $this->pid)) !== false) {
                 unset($this->pid[$index]);
