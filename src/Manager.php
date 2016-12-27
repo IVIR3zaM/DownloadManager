@@ -46,6 +46,21 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
      */
     private $active;
 
+    /**
+     * @var callable
+     */
+    private $beforeThreadHook;
+
+    /**
+     * @var callable
+     */
+    private $parentHook;
+
+    /**
+     * @var callable
+     */
+    private $childHook;
+
     public function __construct(array $data = array())
     {
         $this->active = false;
@@ -76,7 +91,8 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             $change = $subject->getData();
             $index = $this->getIndexByFile($subject);
             if ($index !== false && is_a($change, FilesChanges::class)) {
-                $this->setData(new Changes($index, $change->getField(), $change->getValue(), $change->getOldValue(), $change->getType()));
+                $this->setData(new Changes($index, $change->getField(), $change->getValue(), $change->getOldValue(),
+                    $change->getType()));
             }
         }
     }
@@ -241,5 +257,50 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         }
 
         return $list;
+    }
+
+    public function setBeforeThreadHook(callable $callback)
+    {
+        $this->beforeThreadHook = $callback;
+        return $this;
+    }
+
+    public function getBeforeThreadHook()
+    {
+        if (!is_callable($this->beforeThreadHook)) {
+            $this->beforeThreadHook = function () {
+            };
+        }
+        return $this->beforeThreadHook;
+    }
+
+    public function setParentHook(callable $callback)
+    {
+        $this->parentHook = $callback;
+        return $this;
+    }
+
+    public function getParentHook()
+    {
+        if (!is_callable($this->parentHook)) {
+            $this->parentHook = function () {
+            };
+        }
+        return $this->parentHook;
+    }
+
+    public function setChildHook(callable $callback)
+    {
+        $this->childHook = $callback;
+        return $this;
+    }
+
+    public function getChildHook()
+    {
+        if (!is_callable($this->childHook)) {
+            $this->childHook = function () {
+            };
+        }
+        return $this->childHook;
     }
 }

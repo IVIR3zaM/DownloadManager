@@ -26,15 +26,21 @@ class Manager extends AbstractManager
     public function createThread(Files $file, $index)
     {
         $thread = new Thread($file->getClient());
+        $callback = $this->getManager()->getBeforeThreadHook();
+        $callback(posix_getpid());
         $pid = pcntl_fork();
         if ($pid == -1) {
             throw new \Exception('Pcntl fork failed');
         } else {
             if ($pid) {
+                $callback = $this->getManager()->getParentHook();
+                $callback($pid);
                 $this->isParent = true;
                 $this->pid[$index] = $pid;
                 return $thread;
             } else {
+                $callback = $this->getManager()->getChildHook();
+                $callback(posix_getpid());
                 $this->isParent = false;
                 $code = 0;
                 try {
