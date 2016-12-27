@@ -62,9 +62,14 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     private $childHook;
 
     /**
-     * @var int maximum download speed in bytes ber seconds
+     * @var int total maximum download speed in bytes per seconds
      */
     private $maxSpeed = 0;
+
+    /**
+     * @var int individual file maximum download speed in bytes per seconds
+     */
+    private $maxSpeedPerFile = 0;
 
     public function __construct(array $data = array())
     {
@@ -85,10 +90,16 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         $this->start($index);
     }
 
-    protected function removeHook($index, Files $file)
+    protected function filterRemoveHook($index)
     {
+        $file = $this->getFileByIndex($index);
         $this->stop($index);
         $file->detach($this);
+        return true;
+    }
+
+    protected function removeHook($index, Files $file)
+    {
         $this->initMaxSpeed();
     }
 
@@ -314,11 +325,13 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     private function initMaxSpeed()
     {
         if ($this->getMaxSpeed() > 0 && $this->count() > 0) {
-            $speed = $this->getMaxSpeed() / $this->count();
+            $this->maxSpeedPerFile = $this->getMaxSpeed() / $this->count();
             // TODO: this calculate must be more accurate
-            $speed *= 2;
+            $this->maxSpeedPerFile *= 2;
             foreach ($this as $index => $file) {
-                $file->setMaxSpeed($speed);
+                if ($file->getMaxSpeed() != $this->maxSpeedPerFile) {
+                    $file->setMaxSpeed($this->maxSpeedPerFile);
+                }
             }
         }
     }

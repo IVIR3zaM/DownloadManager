@@ -82,8 +82,14 @@ abstract class AbstractManager extends AbstractActiveArray
         return true;
     }
 
-    public function stop($index)
+    public function stop($index, $running = false)
     {
+        if (!$running) {
+            $file = $this->getManager()->getFileByIndex($index);
+            if ($this->fileIsValid($file)) {
+                $file->setRunning(false);
+            }
+        }
         if (isset($this[$index])) {
             $this->destroyThread($index);
             unset($this[$index]);
@@ -112,7 +118,6 @@ abstract class AbstractManager extends AbstractActiveArray
         unset($this[$index]);
         $file = $this->getManager()->getFileByIndex($index);
         if ($this->fileIsValid($file)) {
-            $file->setRunning(false);
             $file->setActive(false);
         }
         return $this;
@@ -120,7 +125,7 @@ abstract class AbstractManager extends AbstractActiveArray
 
     protected function successThread($index)
     {
-        $this->stop($index);
+        $this->stop($index, true);
         unset($this[$index]);
         $file = $this->getManager()->getFileByIndex($index);
         if ($this->fileIsValid($file)) {
