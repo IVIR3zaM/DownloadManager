@@ -65,6 +65,16 @@ class MortalPdo implements Iterator, Countable
         return empty($this->list) ? false : current($this->list);
     }
 
+    public function countQuery($query, $values = null)
+    {
+        $count = 0;
+        $c = $this->select($query, $values, false);
+        if ($c) {
+            $count = current($c);
+        }
+        return $count;
+    }
+
     public function insert($query, $values = null)
     {
         $pdo = $this->getPdo();
