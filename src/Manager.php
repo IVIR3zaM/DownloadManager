@@ -313,7 +313,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     private function initMaxSpeed()
     {
-        if ($this->getMaxSpeed() > 0) {
+        if ($this->getMaxSpeed() > 0 && $this->count() > 0) {
             $speed = $this->getMaxSpeed() / $this->count();
             // TODO: this calculate must be more accurate
             $speed *= 2;
