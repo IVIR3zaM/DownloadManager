@@ -3,6 +3,7 @@ namespace IVIR3aM\DownloadManager\Helpers;
 
 use PDO;
 use PDOStatement;
+use PDOException;
 use Iterator;
 use Countable;
 
@@ -56,11 +57,16 @@ class MortalPdo implements Iterator, Countable
 
     protected function getPdo($state = self::READ)
     {
-        return $state == self::WRITE ?
-            new PDO("{$this->writeDriver}:dbname={$this->writeDbname};host={$this->writeHost}",
-                $this->writeUsername, $this->writePassword, $this->writeOptions) :
-            new PDO("{$this->readDriver}:dbname={$this->readDbname};host={$this->readHost}",
-                $this->readUsername, $this->readPassword, $this->readOptions);
+        try {
+            return $state == self::WRITE ?
+                new PDO("{$this->writeDriver}:dbname={$this->writeDbname};host={$this->writeHost}",
+                    $this->writeUsername, $this->writePassword, $this->writeOptions) :
+                new PDO("{$this->readDriver}:dbname={$this->readDbname};host={$this->readHost}",
+                    $this->readUsername, $this->readPassword, $this->readOptions);
+        } catch(PDOException $e) {
+            sleep(1);
+            return $this->getPdo($state);
+        }
     }
 
     /**
