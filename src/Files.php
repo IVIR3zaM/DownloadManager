@@ -11,7 +11,8 @@ class Files extends AbstractActiveArray implements SplSubject
 {
     const FIELDS = ['link', 'size', 'maxSpeed', 'speed', 'position', 'headers', 'running', 'active', 'proxy', 'client'];
     const INTEGER_FIELDS = ['size', 'maxSpeed', 'position', 'speed'];
-    private $stepLength = 0;
+    private $lastPacketSize = 0;
+    private $packetSize = 0;
 
     /**
      * @var SplObjectStorage
@@ -28,10 +29,12 @@ class Files extends AbstractActiveArray implements SplSubject
      */
     private $changeType;
 
-    public function __construct(array $data = array())
+    public function __construct(array $data = array(), $packetSize = 1048576)
     {
-        $this->observers = new SplObjectStorage();
         $this->setOuterChange();
+        $this->setLastPacketSize($packetSize);
+        $this->setPacketSize($packetSize);
+        $this->observers = new SplObjectStorage();
         if (!isset($data['headers']) || !is_array($data['headers'])) {
             $data['headers'] = array();
         }
@@ -268,17 +271,22 @@ class Files extends AbstractActiveArray implements SplSubject
         return $this;
     }
 
-    public function getDownloadStepLength()
+    public function setPacketSize($size)
     {
-        if (!$this->stepLength) {
-            $this->stepLength = $this->getMaxSpeed() * 5;
-            if ($this->stepLength + $this->getPosition() > $this->getSize()) {
-                $this->stepLength = $this->getSize() - $this->getPosition();
-            }
-        }
-        return $this->stepLength;
+        $this->packetSize = intval($size);
+        return $this;
     }
 
+    public function getPacketSize()
+    {
+        return $this->lastPacketSize;
+    }
+
+    private function setLastPacketSize($size)
+    {
+        $this->lastPacketSize = intval($size);
+        return $this;
+    }
 
     public function isCompleted()
     {
@@ -291,7 +299,8 @@ class Files extends AbstractActiveArray implements SplSubject
     public function moveForward()
     {
         if (!$this->isCompleted()) {
-            $position = $this->getPosition() + $this->getDownloadStepLength();
+            $position = $this->getPosition() + $this->getPacketSize();
+            $this->setLastPacketSize($this->packetSize);
             $this->stepLength = 0;
             if ($position >= $this->getSize()) {
                 $position = $this->getSize();

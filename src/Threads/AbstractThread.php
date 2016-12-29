@@ -17,8 +17,19 @@ abstract class AbstractThread
 
     public function __construct(HttpClient $client)
     {
-        $this->client = $client;
-        $this->position = $client->getFile()->getPosition();
+        $this->setClient($client);
+        $this->setPosition($client->getFile()->getPosition());
+    }
+
+    public function setPosition($position)
+    {
+        $this->position = $position;
+        return $this;
+    }
+
+    public function getPosition()
+    {
+        return $this->position;
     }
 
     public function setClient(HttpClient $client)
@@ -37,9 +48,14 @@ abstract class AbstractThread
         return $this->getClient()->getProxy();
     }
 
+    public function getPacketSize()
+    {
+        return $this->getClient()->getPacketSize();
+    }
+
     public function download()
     {
-        return $this->getClient()->download($this->position, $this->getClient()->getDownloadStepLength());
+        return $this->getClient()->download($this->getPosition(), $this->getPacketSize());
     }
 
     /**

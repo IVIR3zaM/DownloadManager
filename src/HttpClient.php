@@ -1,7 +1,11 @@
 <?php
 namespace IVIR3aM\DownloadManager;
 
-class HttpClient
+use IVIR3aM\DownloadManager\Files\Changes as FilesChanges;
+use SplObserver;
+use SplSubject;
+
+class HttpClient implements SplObserver
 {
     /**
      * @var Files
@@ -34,6 +38,11 @@ class HttpClient
     private $ch;
 
     /**
+     * @var string
+     */
+    private $link;
+
+    /**
      * @var int
      */
     private $state;
@@ -51,6 +60,65 @@ class HttpClient
         $this->setFile($file);
     }
 
+    public static function sanitizeUriPart($string)
+    {
+        return rawurlencode(rawurldecode($string));
+    }
+
+    public static function sanitizeLink($link)
+    {
+        $p = parse_url($link);
+        if (!isset($p['host'])) {
+            return false;
+        }
+        $path = '';
+        if (isset($p['path'])) {
+            $path = array_map(function ($part) {
+                return static::sanitizeUriPart($part);
+            }, explode('/', $p['path']));
+            $path = implode('/', $path);
+        }
+        return $p['scheme'] . '://' . (
+        isset($p['user']) ?
+            static::sanitizeUriPart($p['user']) . (
+            isset($p['pass']) ?
+                ':' . static::sanitizeUriPart($p['pass']) :
+                ''
+            ) . '@' :
+            ''
+        ) . $p['host'] . (
+        isset($p['port']) ?
+            ':' . intval($p['port']) :
+            ''
+        ) . $path . (
+        isset($p['query']) ?
+            '?' . $p['query'] :
+            ''
+        ) . (
+        isset($p['fragment']) ?
+            '#' . $p['fragment'] :
+            ''
+        );
+    }
+
+    /**
+     * @param $link string
+     * @return void
+     */
+    private function setLink($link)
+    {
+        $link = static::sanitizeLink($link);
+        if (!$link) {
+            throw new \Exception('invalid link specified');
+        }
+        $this->link = $link;
+    }
+
+    public function getLink()
+    {
+        return $this->link;
+    }
+
     public function getFile()
     {
         return $this->file;
@@ -59,7 +127,19 @@ class HttpClient
     public function setFile(Files $file)
     {
         $this->file = $file;
+        $this->setLink($file->getLink());
+        $file->attach($this);
         return $this;
+    }
+
+    public function update(SplSubject $subject)
+    {
+        if ($subject instanceof Files) {
+            $change = $subject->getData();
+            if ($change instanceof FilesChanges && $change->getField() == 'link') {
+                $this->setLink($change->getValue());
+            }
+        }
     }
 
     public function getCookieFile()
@@ -117,12 +197,9 @@ class HttpClient
         return $this;
     }
 
-    public function getDownloadStepLength()
+    public function getPacketSize()
     {
-        if (!$this->getFile()->getSize()) {
-            $this->getInfo();
-        }
-        return $this->getFile()->getDownloadStepLength();
+        return $this->getFile()->getPacketSize();
     }
 
     public function getInfo($header = array())
@@ -157,7 +234,7 @@ class HttpClient
     public function initCurl($state = self::BOTH, $header = [])
     {
         $this->ch = curl_init();
-        curl_setopt($this->ch, CURLOPT_URL, $this->getFile()->getLink());
+        curl_setopt($this->ch, CURLOPT_URL, $this->getLink());
         curl_setopt($this->ch, CURLOPT_USERAGENT, $this->getUserAgent());
         $this->state = $state;
         switch ($state) {
@@ -202,11 +279,12 @@ class HttpClient
         if (curl_errno($this->ch)) { // is timed out ?
             return false;
         }
-        if ($this->state != self::ONLY_BODY) {
-            $head = curl_getinfo($this->ch);
-            if (!$this->getFile()->getSize() && isset($head['download_content_length']) && $head['download_content_length'] >= 0) {
-                $this->getFile()->setSize($head['download_content_length']);
-            }
+        $head = curl_getinfo($this->ch);
+        if (isset($head['url']) && $head['url'] != $this->getLink()) {
+            $this->setLink($head['url']);
+        }
+        if (!$this->getFile()->getSize() && isset($head['download_content_length']) && $head['download_content_length'] >= 0) {
+            $this->getFile()->setSize($head['download_content_length']);
         }
         switch ($this->state) {
             case self::ONLY_HEAD:

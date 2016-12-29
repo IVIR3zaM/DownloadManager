@@ -9,6 +9,11 @@ use SplObserver;
 use SplSubject;
 use SplObjectStorage;
 
+/**
+ * Class Manager
+ * @todo must seperate the storage of the files
+ * @package IVIR3aM\DownloadManager
+ */
 class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 {
     /**
@@ -67,9 +72,9 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     private $maxSpeed = 0;
 
     /**
-     * @var int individual file maximum download speed in bytes per seconds
+     * @var int the size of each packet download per thread in bytes
      */
-    private $maxSpeedPerFile = 0;
+    private $packetSize = 1048576; // equal to 1MB
 
     public function __construct(array $data = array())
     {
@@ -159,6 +164,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             }
             if (!$file->getClient()) {
                 $file->setClient(new HttpClient($file));
+                $file->getClient()->getInfo();
             }
         }
     }
@@ -182,12 +188,19 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return boolval($result);
     }
 
-    public function stop($index = null)
+    public function stop($index = null, $running = false)
     {
         if (!$this->setupCompleted) {
             return false;
         }
-        return boolval(is_null($index) ? $this->getThreadsManager()->stopDownloads() : $this->getThreadsManager()->stop($index));
+        return boolval(is_null($index) ? $this->getThreadsManager()->stopDownloads() : $this->getThreadsManager()->stop($index, $running));
+    }
+
+    public function success($index)
+    {
+        // TODO: must implement strategy pattern
+        $this->stop($index, true);
+        $this->start($index);
     }
 
     private function checkSetupStatus()
@@ -324,14 +337,10 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     private function initMaxSpeed()
     {
-        if ($this->getMaxSpeed() > 0 && $this->count() > 0) {
-            $this->maxSpeedPerFile = $this->getMaxSpeed() / $this->count();
-            // TODO: this calculate must be more accurate
-            $this->maxSpeedPerFile *= 2;
-            foreach ($this as $index => $file) {
-                if ($file->getMaxSpeed() != $this->maxSpeedPerFile) {
-                    $file->setMaxSpeed($this->maxSpeedPerFile);
-                }
+        // TODO: must implement strategy pattern
+        foreach ($this as $index => $file) {
+            if ($file->getMaxSpeed() != $this->getMaxSpeed()) {
+                $file->setMaxSpeed($this->getMaxSpeed());
             }
         }
     }
@@ -346,5 +355,19 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     public function getMaxSpeed()
     {
         return $this->maxSpeed;
+    }
+
+    public function setPacketSize($size)
+    {
+        $this->packetSize = intval($size);
+        foreach ($this as $file) {
+            $file->setPacketSize($this->packetSize);
+        }
+        return $this;
+    }
+
+    public function getPacketSize()
+    {
+        return $this->packetSize;
     }
 }
