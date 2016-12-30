@@ -90,6 +90,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     protected function insertHook($index, Files $file)
     {
+        $file->setPacketSize($this->getPacketSize());
         $this->initMaxSpeed();
         $file->attach($this);
         $this->start($index);

@@ -274,6 +274,9 @@ class Files extends AbstractActiveArray implements SplSubject
     public function setPacketSize($size)
     {
         $this->packetSize = intval($size);
+        if (!$this->getRunning()) {
+            $this->setLastPacketSize($size);
+        }
         return $this;
     }
 
