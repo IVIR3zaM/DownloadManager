@@ -450,13 +450,4 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     {
         return $this->packetSize;
     }
-
-    public function __destruct()
-    {
-        foreach ($this->getFiles() as $index => $file) {
-            if ($file->getRunning()) {
-                $this->stop($index);
-            }
-        }
-    }
 }
