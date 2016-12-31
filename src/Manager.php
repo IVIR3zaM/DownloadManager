@@ -116,9 +116,6 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             $change = $subject->getData();
             $index = $this->getIndexByFile($subject);
             if ($index !== false && $change instanceof FilesChanges) {
-                if ($change->getType() == FilesChanges::INNER && $change->getField() == 'running') {
-                    $this->checkResumeThreads();
-                }
                 $this->setData(new Changes($index, $change->getField(), $change->getValue(), $change->getOldValue(),
                     $change->getType()));
             }
@@ -307,6 +304,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     public function mustWait()
     {
+        $this->checkResumeThreads();
         return $this->getThreadsManager() ? $this->getThreadsManager()->mustWait() : false;
     }
 
