@@ -9,7 +9,7 @@ use SplObjectStorage;
 
 class Files extends AbstractActiveArray implements SplSubject
 {
-    const FIELDS = ['link', 'size', 'maxSpeed', 'speed', 'position', 'headers', 'running', 'active', 'proxy', 'client'];
+    const FIELDS = ['link', 'size', 'maxSpeed', 'speed', 'position', 'headers', 'running', 'active', 'proxy', 'client', 'wait'];
     const INTEGER_FIELDS = ['size', 'maxSpeed', 'position', 'speed'];
     private $lastPacketSize = 0;
     private $packetSize = 0;
@@ -48,7 +48,8 @@ class Files extends AbstractActiveArray implements SplSubject
         $result = in_array($offset, self::FIELDS);
         if ($offset == 'proxy') {
             $result = is_a($value, Proxy::class);
-        } elseif ($offset == 'client') {
+        }
+        if ($offset == 'client') {
             $result = is_a($value, HttpClient::class);
         }
         return $result;
@@ -142,6 +143,18 @@ class Files extends AbstractActiveArray implements SplSubject
     {
         $this->setInnerChange();
         $this['client'] = $client;
+        return $this;
+    }
+
+    public function getWaiting()
+    {
+        return boolval($this['wait']);
+    }
+
+    public function setWaiting($wait = true)
+    {
+        $this->setInnerChange();
+        $this['wait'] = $wait;
         return $this;
     }
 

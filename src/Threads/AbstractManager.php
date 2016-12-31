@@ -39,29 +39,6 @@ abstract class AbstractManager extends AbstractActiveArray
         return $this->manager;
     }
 
-    public function startDownloads()
-    {
-        if ($this->started) {
-            return true;
-        }
-
-        $this->started = true;
-        foreach ($this->getManager()->getFilesIndexes() as $index) {
-            $this->start($index);
-        }
-
-        return $this;
-    }
-
-    public function stopDownloads()
-    {
-        $this->started = false;
-        foreach ($this as $index => $thread) {
-            $this->stop($index);
-        }
-        return $this;
-    }
-
     public function start($index)
     {
         if (isset($this[$index])) {

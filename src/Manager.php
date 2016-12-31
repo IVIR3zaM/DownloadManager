@@ -115,7 +115,10 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         if (is_a($subject, Files::class)) {
             $change = $subject->getData();
             $index = $this->getIndexByFile($subject);
-            if ($index !== false && is_a($change, FilesChanges::class)) {
+            if ($index !== false && $change instanceof FilesChanges) {
+                if ($change->getType() == FilesChanges::INNER && $change->getField() == 'running') {
+                    $this->checkResumeThreads();
+                }
                 $this->setData(new Changes($index, $change->getField(), $change->getValue(), $change->getOldValue(),
                     $change->getType()));
             }
@@ -158,6 +161,11 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         $this->active = boolval($active);
     }
 
+    public function getActive()
+    {
+        return $this->active;
+    }
+
     private function initializeFile(Files $file)
     {
         if (!$file->getRunning() && $file->getActive()) {
@@ -177,15 +185,14 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             return false;
         }
         if (is_null($index)) {
-            foreach ($this->getFiles() as $file) {
-                $this->initializeFile($file);
+            $result = true;
+            foreach ($this->getFilesIndexes() as $index) {
+                if ($this->canStartNewThread($index) === false) {
+                    $result = false;
+                }
             }
-            $result = $this->getThreadsManager()->startDownloads();
-        } elseif (($file = $this->getFileByIndex($index))) {
-            $this->initializeFile($file);
-            $result = $this->getThreadsManager()->start($index);
         } else {
-            $result = false;
+            $result = $this->canStartNewThread($index);
         }
         return boolval($result);
     }
@@ -195,30 +202,74 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         if (!$this->setupCompleted) {
             return false;
         }
-        return boolval(is_null($index) ? $this->getThreadsManager()->stopDownloads() : $this->getThreadsManager()->stop($index, $running));
+        if (is_null($index)) {
+            $result = true;
+            foreach ($this->getFilesIndexes() as $index) {
+                if ($this->getThreadsManager()->stop($index, $running) === false) {
+                    $result = false;
+                }
+            }
+        } else {
+            $result = $this->getThreadsManager()->stop($index, $running);
+        }
+        return boolval($result);
     }
 
     public function successThread($index)
     {
         // TODO: must implement strategy pattern
         $file = $this->getFileByIndex($index);
-        if ($file) {
-            $file->moveForward();
-            $this->stop($index, true);
-            $this->start($index);
+        if (!$file) {
+            return;
         }
+        $file->moveForward();
+        $this->stop($index, true);
+        $this->start($index);
     }
-    
+
     public function errorThread($index)
     {
         // TODO: must implement strategy pattern
         $this->stop($index);
         sleep(1);
-        $this->start($index); // temporary. this must implemented in strategy
+        $this->start($index);
 //        $file = $this->getManager()->getFileByIndex($index);
 //        if ($this->fileIsValid($file)) {
 //            $file->setActive(false);
 //        }
+    }
+
+    protected function canStartNewThread($index)
+    {
+        // TODO: must implement strategy pattern
+        $file = $this->getFileByIndex($index);
+        if (!$file) {
+            return false;
+        }
+        $this->initializeFile($file);
+        if ($this->getSpeed() < $this->getMaxSpeed()) {
+            if ($file->getWaiting()) {
+                $file->setWaiting(false);
+            }
+            return $this->getThreadsManager()->start($index);
+        }
+        $this->stop($index);
+        if (!$file->getWaiting()) {
+            $file->setWaiting(true);
+        }
+        return null;
+    }
+
+    protected function checkResumeThreads()
+    {
+        // TODO: must implement strategy pattern
+        foreach ($this->getFiles() as $index => $file) {
+            if ($file->getWaiting()) {
+                if ($this->canStartNewThread($index) === null) {
+                    break;
+                }
+            }
+        }
     }
 
     private function checkSetupStatus()
@@ -301,7 +352,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     {
         $list = [];
 
-        foreach ($this as $index => $file) {
+        foreach ($this->getFiles() as $index => $file) {
             $list[] = $index;
         }
 
@@ -356,7 +407,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     private function initMaxSpeed()
     {
         // TODO: must implement strategy pattern
-        foreach ($this as $index => $file) {
+        foreach ($this->getFiles() as $file) {
             if ($file->getMaxSpeed() != $this->getMaxSpeed()) {
                 $file->setMaxSpeed($this->getMaxSpeed());
             }
@@ -375,10 +426,21 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return $this->maxSpeed;
     }
 
+    public function getSpeed()
+    {
+        $speed = 0;
+        foreach ($this->getFiles() as $index => $file) {
+            if ($file->getRunning()) {
+                $speed += $file->getSpeed();
+            }
+        }
+        return $speed;
+    }
+
     public function setPacketSize($size)
     {
         $this->packetSize = intval($size);
-        foreach ($this as $file) {
+        foreach ($this->getFiles() as $file) {
             $file->setPacketSize($this->packetSize);
         }
         return $this;
