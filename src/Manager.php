@@ -455,7 +455,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     {
         foreach ($this->getFiles() as $index => $file) {
             if ($file->getRunning()) {
-                $file->stop($index);
+                $this->stop($index);
             }
         }
     }
