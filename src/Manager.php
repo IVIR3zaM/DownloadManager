@@ -12,6 +12,7 @@ use SplObjectStorage;
 /**
  * Class Manager
  * @todo must seperate the storage of the files
+ * @todo must implement a mediator pattern for whole system
  * @package IVIR3aM\DownloadManager
  */
 class Manager extends AbstractActiveArray implements SplObserver, SplSubject
@@ -197,11 +198,27 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return boolval(is_null($index) ? $this->getThreadsManager()->stopDownloads() : $this->getThreadsManager()->stop($index, $running));
     }
 
-    public function success($index)
+    public function successThread($index)
     {
         // TODO: must implement strategy pattern
-        $this->stop($index, true);
-        $this->start($index);
+        $file = $this->getFileByIndex($index);
+        if ($file) {
+            $file->moveForward();
+            $this->stop($index, true);
+            $this->start($index);
+        }
+    }
+    
+    public function errorThread($index)
+    {
+        // TODO: must implement strategy pattern
+        $this->stop($index);
+        sleep(1);
+        $this->start($index); // temporary. this must implemented in strategy
+//        $file = $this->getManager()->getFileByIndex($index);
+//        if ($this->fileIsValid($file)) {
+//            $file->setActive(false);
+//        }
     }
 
     private function checkSetupStatus()

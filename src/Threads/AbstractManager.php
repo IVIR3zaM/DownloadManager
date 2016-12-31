@@ -114,21 +114,13 @@ abstract class AbstractManager extends AbstractActiveArray
     
     protected function errorThread($index)
     {
-        $this->stop($index);
-        $file = $this->getManager()->getFileByIndex($index);
-        if ($this->fileIsValid($file)) {
-            $file->setActive(false);
-        }
+        $this->getManager()->errorThread($index);
         return $this;
     }
 
     protected function successThread($index)
     {
-        $file = $this->getManager()->getFileByIndex($index);
-        if ($this->fileIsValid($file)) {
-            $file->moveForward();
-            $this->getManager()->success($index);
-        }
+        $this->getManager()->successThread($index);
         return $this;
     }
 

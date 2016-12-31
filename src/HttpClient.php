@@ -58,6 +58,8 @@ class HttpClient implements SplObserver
         $this->setRedirects($redirects);
         $this->setUserAgent(StaticUserAgents::getRandomUserAgent());
         $this->setFile($file);
+
+        $this->ch = curl_init();
     }
 
     public static function sanitizeUriPart($string)
@@ -233,20 +235,19 @@ class HttpClient implements SplObserver
 
     public function initCurl($state = self::BOTH, $header = [])
     {
-        $this->ch = curl_init();
         curl_setopt($this->ch, CURLOPT_URL, $this->getLink());
         curl_setopt($this->ch, CURLOPT_USERAGENT, $this->getUserAgent());
         $this->state = $state;
         switch ($state) {
             case self::ONLY_HEAD:
                 curl_setopt($this->ch, CURLOPT_NOBODY, true);
+                curl_setopt($this->ch, CURLOPT_MAX_RECV_SPEED_LARGE, 0);
                 break;
             default:
             case self::ONLY_BODY:
             case self::BOTH:
-                if ($this->getFile()->getMaxSpeed() > 0) {
-                    curl_setopt($this->ch, CURLOPT_MAX_RECV_SPEED_LARGE, $this->getFile()->getMaxSpeed());
-                }
+            curl_setopt($this->ch, CURLOPT_NOBODY, false);
+            curl_setopt($this->ch, CURLOPT_MAX_RECV_SPEED_LARGE, ($this->getFile()->getMaxSpeed() > 0 ? $this->getFile()->getMaxSpeed() : 0));
                 break;
         }
         curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
@@ -266,6 +267,8 @@ class HttpClient implements SplObserver
         if ($this->getProxy()->isUsable()) {
             curl_setopt($this->ch, CURLOPT_PROXYTYPE, $this->getProxy()->getType());
             curl_setopt($this->ch, CURLOPT_PROXY, $this->getProxy()->getIp() . ':' . $this->getProxy()->getPort());
+        } else {
+            curl_setopt($this->ch, CURLOPT_PROXY, null);
         }
         return $this->ch;
     }
@@ -283,7 +286,7 @@ class HttpClient implements SplObserver
         if (isset($head['url']) && $head['url'] != $this->getLink()) {
             $this->setLink($head['url']);
         }
-        if (!$this->getFile()->getSize() && isset($head['download_content_length']) && $head['download_content_length'] >= 0) {
+        if (isset($head['download_content_length']) && $head['download_content_length'] >= 0 && $this->getFile()->getSize() != $head['download_content_length']) {
             $this->getFile()->setSize($head['download_content_length']);
         }
         switch ($this->state) {
@@ -301,7 +304,6 @@ class HttpClient implements SplObserver
                 unset($content, $head);
                 break;
         }
-        curl_close($this->ch);
         return $ret;
     }
 
@@ -335,5 +337,10 @@ class HttpClient implements SplObserver
             }
         }
         return $ret;
+    }
+
+    public function __destruct()
+    {
+        curl_close($this->ch);
     }
 }
