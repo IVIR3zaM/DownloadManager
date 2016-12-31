@@ -246,8 +246,9 @@ class HttpClient implements SplObserver
             default:
             case self::ONLY_BODY:
             case self::BOTH:
-            curl_setopt($this->ch, CURLOPT_NOBODY, false);
-            curl_setopt($this->ch, CURLOPT_MAX_RECV_SPEED_LARGE, ($this->getFile()->getMaxSpeed() > 0 ? $this->getFile()->getMaxSpeed() : 0));
+                curl_setopt($this->ch, CURLOPT_NOBODY, false);
+                curl_setopt($this->ch, CURLOPT_MAX_RECV_SPEED_LARGE,
+                    ($this->getFile()->getMaxSpeed() > 0 ? $this->getFile()->getMaxSpeed() : 0));
                 break;
         }
         curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
@@ -286,7 +287,9 @@ class HttpClient implements SplObserver
         if (isset($head['url']) && $head['url'] != $this->getLink()) {
             $this->setLink($head['url']);
         }
-        if (isset($head['download_content_length']) && $head['download_content_length'] >= 0 && $this->getFile()->getSize() != $head['download_content_length']) {
+        if (isset($head['http_code']) && $head['http_code'] == 200 &&
+            isset($head['download_content_length']) && $head['download_content_length'] >= 0 &&
+            $this->getFile()->getSize() != $head['download_content_length']) {
             $this->getFile()->setSize($head['download_content_length']);
         }
         switch ($this->state) {
