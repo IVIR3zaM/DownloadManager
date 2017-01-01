@@ -1,8 +1,9 @@
 <?php
-namespace IVIR3aM\DownloadManager;
+namespace IVIR3aM\DownloadManager\Files;
 
 use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
-use IVIR3aM\DownloadManager\Files\Changes;
+use IVIR3aM\DownloadManager\Proxies\Proxies;
+use IVIR3aM\DownloadManager\HttpClient\HttpClient;
 use SplSubject;
 use SplObserver;
 use SplObjectStorage;
@@ -47,7 +48,7 @@ class Files extends AbstractActiveArray implements SplSubject
     {
         $result = in_array($offset, self::FIELDS);
         if ($offset == 'proxy') {
-            $result = is_a($value, Proxy::class);
+            $result = is_a($value, Proxies::class);
         }
         if ($offset == 'client') {
             $result = is_a($value, HttpClient::class);
@@ -120,14 +121,14 @@ class Files extends AbstractActiveArray implements SplSubject
 
     public function getProxy()
     {
-        if (!isset($this['proxy']) || !is_a($this['proxy'], Proxy::class)) {
+        if (!isset($this['proxy']) || !is_a($this['proxy'], Proxies::class)) {
             $this->setInnerChange();
-            $this['proxy'] = new Proxy();
+            $this['proxy'] = new Proxies();
         }
         return $this['proxy'];
     }
 
-    public function setProxy(Proxy $proxy)
+    public function setProxy(Proxies $proxy)
     {
         $this->setInnerChange();
         $this['proxy'] = $proxy;

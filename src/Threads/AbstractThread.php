@@ -1,7 +1,7 @@
 <?php
 namespace IVIR3aM\DownloadManager\Threads;
 
-use IVIR3aM\DownloadManager\HttpClient;
+use IVIR3aM\DownloadManager\HttpClient\HttpClient;
 
 abstract class AbstractThread
 {

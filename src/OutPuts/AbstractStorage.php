@@ -1,7 +1,7 @@
 <?php
 namespace IVIR3aM\DownloadManager\OutPuts;
 
-use IVIR3aM\DownloadManager\Files;
+use IVIR3aM\DownloadManager\Files\Files;
 
 /**
  * Class AbstractStorage
@@ -26,6 +26,9 @@ abstract class AbstractStorage
     public function put(Files $file, $data, $position = 0)
     {
         $handler = $this->getHandler($file->getLink(), $file->getSize());
+        if (!is_object($handler) || !in_array(HandlerInterface::class, class_implements($handler))) {
+            throw new Exception('invalid handler passed in', 1);
+        }
         return $handler->put($data, $position);
     }
 

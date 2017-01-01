@@ -1,11 +1,10 @@
 <?php
 namespace IVIR3aM\DownloadManager\Threads\Pcntl;
 
-use IVIR3aM\DownloadManager\HttpClient;
 use IVIR3aM\DownloadManager\Threads\AbstractManager;
 use IVIR3aM\DownloadManager\Manager as DownloadManager;
-use IVIR3aM\DownloadManager\Files;
-use IVIR3aM\DownloadManager\Proxy;
+use IVIR3aM\DownloadManager\Files\Files;
+use IVIR3aM\DownloadManager\Threads\Exception;
 
 class Manager extends AbstractManager
 {
@@ -30,7 +29,7 @@ class Manager extends AbstractManager
         $callback(posix_getpid());
         $pid = pcntl_fork();
         if ($pid == -1) {
-            throw new \Exception('Pcntl fork failed');
+            throw new Exception('Pcntl fork failed', 11);
         } else {
             if ($pid) {
                 $callback = $this->getManager()->getParentHook();

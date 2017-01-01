@@ -1,12 +1,12 @@
 <?php
-namespace IVIR3aM\DownloadManager;
+namespace IVIR3aM\DownloadManager\Proxies;
 
-class Proxy
+class Proxies
 {
     protected $ip;
     protected $port;
     protected $type;
-    const HTTP = 0;
+    const HTTP = 1;
     const SOCKS4 = 4;
     const SOCKS5 = 5;
     const SOCKS4A = 6;

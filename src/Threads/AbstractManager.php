@@ -3,7 +3,7 @@ namespace IVIR3aM\DownloadManager\Threads;
 
 use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
 use IVIR3aM\DownloadManager\Manager as DownloadManager;
-use IVIR3aM\DownloadManager\Files;
+use IVIR3aM\DownloadManager\Files\Files;
 
 abstract class AbstractManager extends AbstractActiveArray
 {
@@ -51,7 +51,7 @@ abstract class AbstractManager extends AbstractActiveArray
         if (!$file->isCompleted()) {
             $thread = $this->createThread($file, $index);
             if (!$this->threadIsValid($thread)) {
-                throw new \Exception('Invalid thread returned from createThread() method');
+                throw new Exception('Invalid thread returned from createThread() method', 1);
             }
             $file->setRunning(true);
             $this[$index] = $thread;

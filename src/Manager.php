@@ -1,10 +1,15 @@
 <?php
 namespace IVIR3aM\DownloadManager;
 
+use IVIR3aM\DownloadManager\HttpClient\Exception as HttpClientException;
 use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
 use IVIR3aM\DownloadManager\Threads\AbstractManager as ThreadsManager;
 use IVIR3aM\DownloadManager\Outputs\AbstractStorage as OutputsStorage;
+use IVIR3aM\DownloadManager\Files\Files;
 use IVIR3aM\DownloadManager\Files\Changes as FilesChanges;
+use IVIR3aM\DownloadManager\Proxies\Stack as ProxiesStack;
+use IVIR3aM\DownloadManager\Proxies\Proxies;
+use IVIR3aM\DownloadManager\HttpClient\HttpClient;
 use SplObserver;
 use SplSubject;
 use SplObjectStorage;
@@ -23,7 +28,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     private $threadManager;
 
     /**
-     * @var Proxies
+     * @var ProxiesStack
      */
     private $proxies;
 
@@ -170,9 +175,31 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
                 $file->setProxy($this->getRandomProxy());
             }
             if (!$file->getClient()) {
+                // TODO: must set timeout and connection timeout here
                 $file->setClient(new HttpClient($file));
-                $file->getClient()->getInfo();
+                try {
+                    $this->fetchFileInfo($file);
+                } catch (HttpClientException $e) {
+                    $this->freeProxy($file->getProxy());
+                    $file->setProxy($this->getRandomProxy());
+                    try {
+                        $this->fetchFileInfo($file);
+                    } catch (HttpClientException $e) {}
+                }
             }
+        }
+    }
+
+    private function fetchFileInfo(Files $file)
+    {
+        if ($file->getSize() > 0) {
+            return;
+        }
+        $head = $file->getClient()->getInfo();
+        if (isset($head['http_code']) && $head['http_code'] == 200 &&
+            isset($head['download_content_length']) && $head['download_content_length'] >= 0 &&
+            $file->getSize() != $head['download_content_length']) {
+            $file->setSize($head['download_content_length']);
         }
     }
 
@@ -308,7 +335,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return $this->getThreadsManager() ? $this->getThreadsManager()->mustWait() : false;
     }
 
-    public function setProxies(Proxies $proxies)
+    public function setProxies(ProxiesStack $proxies)
     {
         $this->proxies = $proxies;
         return $this->checkSetupStatus();
@@ -324,7 +351,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return $this->getProxies() ? $this->getProxies()->getRandomProxy() : new Proxy();
     }
 
-    public function freeProxy(Proxy $proxy)
+    public function freeProxy(Proxies $proxy)
     {
         if ($this->getProxies()) {
             $this->getProxies()->freeProxy($proxy);

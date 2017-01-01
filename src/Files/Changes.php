@@ -1,8 +1,6 @@
 <?php
 namespace IVIR3aM\DownloadManager\Files;
 
-use IVIR3aM\DownloadManager\Files;
-
 class Changes
 {
     const INNER = 0;
@@ -22,7 +20,7 @@ class Changes
     public function __construct($field, $value, $oldValue = null, $type = self::INNER)
     {
         if (!in_array($field, Files::FIELDS)) {
-            throw new \Exception('filed is not valid');
+            throw new Exception('field is not valid', 1);
         }
         $this->field = $field;
         $this->value = $value;

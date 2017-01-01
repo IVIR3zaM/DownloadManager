@@ -1,5 +1,5 @@
 <?php
-namespace IVIR3aM\DownloadManager\Helpers;
+namespace IVIR3aM\DownloadManager\Threads\Pcntl;
 
 use PDO;
 use PDOStatement;

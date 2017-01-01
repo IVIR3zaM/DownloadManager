@@ -2,7 +2,8 @@
 namespace IVIR3aM\DownloadManager\Threads\Pcntl;
 
 use IVIR3aM\DownloadManager\Threads\AbstractThread;
-use IVIR3aM\DownloadManager\HttpClient;
+use IVIR3aM\DownloadManager\HttpClient\HttpClient;
+use IVIR3aM\DownloadManager\Threads\Exception;
 
 class Thread extends AbstractThread
 {
@@ -18,7 +19,7 @@ class Thread extends AbstractThread
         $this->running = true;
         $data = $this->download();
         if ($data === null) {
-            throw new \Exception('data is null');
+            throw new Exception('data is null', 12);
         }
         $this->running = false;
         return $data;

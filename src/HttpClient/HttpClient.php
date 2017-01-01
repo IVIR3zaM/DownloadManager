@@ -1,7 +1,10 @@
 <?php
-namespace IVIR3aM\DownloadManager;
+namespace IVIR3aM\DownloadManager\HttpClient;
 
 use IVIR3aM\DownloadManager\Files\Changes as FilesChanges;
+use IVIR3aM\DownloadManager\Files\Files;
+use IVIR3aM\DownloadManager\Proxies\Proxies;
+use IVIR3aM\DownloadManager\StaticUserAgents;
 use SplObserver;
 use SplSubject;
 
@@ -51,7 +54,7 @@ class HttpClient implements SplObserver
     const ONLY_HEAD = 1;
     const ONLY_BODY = 2;
 
-    public function __construct(Files $file, $cookieFilePath = '', $timeout = 60, $redirects = 5)
+    public function __construct(Files $file, $cookieFilePath = '', $timeout = 5, $redirects = 5)
     {
         $this->setCookieFile($cookieFilePath);
         $this->setTimeout($timeout);
@@ -111,7 +114,7 @@ class HttpClient implements SplObserver
     {
         $link = static::sanitizeLink($link);
         if (!$link) {
-            throw new \Exception('invalid link specified');
+            throw new Exception('invalid link specified', 1);
         }
         $this->link = $link;
     }
@@ -214,10 +217,10 @@ class HttpClient implements SplObserver
         $position = intval($position);
         $length = intval($length);
         if ($position < 0) {
-            throw new \Exception('position can not be less than zero');
+            throw new Exception('position can not be less than zero', 2);
         }
         if ($length < 0) {
-            throw new \Exception('length can not be less than zero');
+            throw new Exception('length can not be less than zero', 3);
         }
         if ($length > 0) {
             $to = $position + $length - 1;
@@ -281,16 +284,11 @@ class HttpClient implements SplObserver
         }
         $content = curl_exec($this->ch);
         if (curl_errno($this->ch)) { // is timed out ?
-            return false;
+            throw new Exception('curl error #' . curl_errno($this->ch), 4);
         }
         $head = curl_getinfo($this->ch);
         if (isset($head['url']) && $head['url'] != $this->getLink()) {
             $this->setLink($head['url']);
-        }
-        if (isset($head['http_code']) && $head['http_code'] == 200 &&
-            isset($head['download_content_length']) && $head['download_content_length'] >= 0 &&
-            $this->getFile()->getSize() != $head['download_content_length']) {
-            $this->getFile()->setSize($head['download_content_length']);
         }
         switch ($this->state) {
             case self::ONLY_HEAD:
