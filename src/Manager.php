@@ -10,6 +10,7 @@ use IVIR3aM\DownloadManager\Files\Changes as FilesChanges;
 use IVIR3aM\DownloadManager\Proxies\Stack as ProxiesStack;
 use IVIR3aM\DownloadManager\Proxies\Proxies;
 use IVIR3aM\DownloadManager\HttpClient\HttpClient;
+use IVIR3aM\DownloadManager\TimeoutHolderTrait;
 use SplObserver;
 use SplSubject;
 use SplObjectStorage;
@@ -22,6 +23,7 @@ use SplObjectStorage;
  */
 class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 {
+    use TimeoutHolderTrait;
     /**
      * @var ThreadsManager
      */
@@ -82,31 +84,11 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
      */
     private $packetSize = 1048576; // equal to 1MB
 
-    /**
-     * @var int the timeout of curl in seconds
-     */
-    private $timeout = 30;
-
     public function __construct(array $data = array())
     {
         $this->active = false;
         $this->observers = new SplObjectStorage();
         parent::__construct($data);
-    }
-    
-    public function getTimeout()
-    {
-        return $this->timeout;
-    }
-
-    public function setTimeout($timeout)
-    {
-        $timeout = intval($timeout);
-        if ($timeout < 1) {
-            $timeout = 1;
-        }
-        $this->timeout = $timeout;
-        return $this;
     }
 
     protected function filterInputHook($offset, $value)
@@ -196,7 +178,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             }
             if (!$file->getClient()) {
                 // TODO: must set timeout and connection timeout here
-                $file->setClient(new HttpClient($file, $this->getTimeout()));
+                $file->setClient(new HttpClient($file, $this->getConnectTimeout(), $this->getFetchTimeout()));
                 try {
                     $this->fetchFileInfo($file);
                 } catch (HttpClientException $e) {
@@ -278,6 +260,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         $file = $this->getFileByIndex($index);
         if ($file) {
             $file->setSpeed(0);
+            $file->setProxy($this->getRandomProxy());
         }
         sleep(1);
         $this->start($index);

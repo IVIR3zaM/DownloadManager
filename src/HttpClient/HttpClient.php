@@ -5,20 +5,17 @@ use IVIR3aM\DownloadManager\Files\Changes as FilesChanges;
 use IVIR3aM\DownloadManager\Files\Files;
 use IVIR3aM\DownloadManager\Proxies\Proxies;
 use IVIR3aM\DownloadManager\StaticUserAgents;
+use IVIR3aM\DownloadManager\TimeoutHolderTrait;
 use SplObserver;
 use SplSubject;
 
 class HttpClient implements SplObserver
 {
+    use TimeoutHolderTrait;
     /**
      * @var Files
      */
     private $file;
-
-    /**
-     * @var int
-     */
-    private $timeout;
 
     /**
      * @var string
@@ -54,10 +51,11 @@ class HttpClient implements SplObserver
     const ONLY_HEAD = 1;
     const ONLY_BODY = 2;
 
-    public function __construct(Files $file, $timeout = 60, $redirects = 5, $cookieFilePath = '')
+    public function __construct(Files $file, $connectTimeout = 5, $fetchTimeout = 60, $redirects = 5, $cookieFilePath = '')
     {
         $this->setCookieFile($cookieFilePath);
-        $this->setTimeout($timeout);
+        $this->setConnectTimeout($connectTimeout);
+        $this->setFetchTimeout($fetchTimeout);
         $this->setRedirects($redirects);
         $this->setUserAgent(StaticUserAgents::getRandomUserAgent());
         $this->setFile($file);
@@ -163,24 +161,9 @@ class HttpClient implements SplObserver
         return $this->getFile()->getProxy();
     }
 
-    public function getTimeout()
-    {
-        return $this->timeout;
-    }
-
-    public function setTimeout($timeout)
-    {
-        $timeout = intval($timeout);
-        if ($timeout < 1) {
-            $timeout = 1;
-        }
-        $this->timeout = $timeout;
-        return $this;
-    }
-
     public function getRedirects()
     {
-        return $this->timeout;
+        return $this->redirects;
     }
 
     public function setRedirects($redirects)
@@ -259,8 +242,8 @@ class HttpClient implements SplObserver
 //        curl_setopt($this->ch, CURLOPT_HEADER, true);
         curl_setopt($this->ch, CURLOPT_COOKIEFILE, $this->getCookieFile());
         curl_setopt($this->ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($this->ch, CURLOPT_CONNECTTIMEOUT, $this->getTimeout());
-        curl_setopt($this->ch, CURLOPT_TIMEOUT, $this->getTimeout());
+        curl_setopt($this->ch, CURLOPT_CONNECTTIMEOUT, $this->getConnectTimeout());
+        curl_setopt($this->ch, CURLOPT_TIMEOUT, $this->getFetchTimeout());
         curl_setopt($this->ch, CURLOPT_HTTPHEADER, $this->prepareHeaders($header));
         if ($this->getRedirects() > 0) {
             curl_setopt($this->ch, CURLOPT_FOLLOWLOCATION, true);

@@ -1,6 +1,7 @@
 <?php
 namespace IVIR3aM\DownloadManager\Proxies;
 
+use IVIR3aM\DownloadManager\TimeoutHolderTrait;
 /**
  * Class Checker
  * @package IVIR3aM\DownloadManager\Proxies
@@ -8,16 +9,7 @@ namespace IVIR3aM\DownloadManager\Proxies;
  */
 class Checker
 {
-    /**
-     * @var int connect timeout of a proxy
-     */
-    private $connectTimeout;
-
-    /**
-     * @var int fetching data from url timeout of a proxy
-     */
-    private $fetchTimeout;
-
+    use TimeoutHolderTrait;
     /**
      * @var string the url for testing the proxy
      */
@@ -38,36 +30,6 @@ class Checker
         $this->setFetchTimeout($fetchTimeout);
         $this->setUrl($url);
         $this->setKeywords($keywords);
-    }
-
-    public function getConnectTimeout()
-    {
-        return $this->connectTimeout;
-    }
-
-    public function setConnectTimeout($timeout)
-    {
-        $timeout = intval($timeout);
-        if ($timeout < 1) {
-            $timeout = 1;
-        }
-        $this->connectTimeout = $timeout;
-        return $this;
-    }
-
-    public function getFetchTimeout()
-    {
-        return $this->fetchTimeout;
-    }
-
-    public function setFetchTimeout($timeout)
-    {
-        $timeout = intval($timeout);
-        if ($timeout < 1) {
-            $timeout = 1;
-        }
-        $this->fetchTimeout = $timeout;
-        return $this;
     }
 
     public function getUrl()
