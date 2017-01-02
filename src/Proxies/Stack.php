@@ -49,12 +49,6 @@ class Stack extends AbstractActiveArray
 
     public function getProxyIndex(Proxies $proxy)
     {
-        foreach ($this->used as $key => $object) {
-            if ($proxy == $object) {
-                return $key;
-            }
-        }
-
         foreach ($this as $key => $object) {
             if ($proxy == $object) {
                 return $key;
@@ -72,9 +66,7 @@ class Stack extends AbstractActiveArray
     public function useProxyByIndex($index)
     {
         if (isset($this[$index]) && !isset($this->used[$index])) {
-            $proxy = $this[$index];
-            unset($this[$index]);
-            $this->used[$index] = $proxy;
+            $this->used[$index] = $index;
             return true;
         }
         return false;
@@ -85,9 +77,6 @@ class Stack extends AbstractActiveArray
         $key = $this->getProxyIndex($proxy);
         if ($key !== false) {
             unset($this->used[$key]);
-            if ($proxy->isUsable()) {
-                $this[$key] = $proxy;
-            }
             return true;
         }
         return false;
