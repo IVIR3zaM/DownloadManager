@@ -5,7 +5,7 @@ use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
 
 class Stack extends AbstractActiveArray
 {
-    protected $used = [];
+    protected $available = [];
     protected function filterInputHook($offset, $data)
     {
         if (is_array($data)) {
@@ -21,7 +21,12 @@ class Stack extends AbstractActiveArray
 
     protected function removeHook($offset)
     {
-        unset($this->used[$offset]);
+        unset($this->available[$offset]);
+    }
+
+    protected function insertHook($offset)
+    {
+        $this->available[$offset] = $offset;
     }
 
     protected function sanitizeInputHook($offset, $data)
@@ -37,7 +42,7 @@ class Stack extends AbstractActiveArray
 
     public function getRandomProxy()
     {
-        if (count($this) && ($key = $this->array_rand(1)) !== false) {
+        if (count($this) && ($key = array_rand($this->available, 1)) !== false) {
             $proxy = $this[$key];
             $this->useProxyByIndex($key);
         } else {
@@ -65,8 +70,8 @@ class Stack extends AbstractActiveArray
 
     public function useProxyByIndex($index)
     {
-        if (isset($this[$index]) && !isset($this->used[$index])) {
-            $this->used[$index] = $index;
+        if (isset($this[$index]) && isset($this->available[$index])) {
+            unset($this->available[$index]);
             return true;
         }
         return false;
@@ -76,7 +81,7 @@ class Stack extends AbstractActiveArray
     {
         $key = $this->getProxyIndex($proxy);
         if ($key !== false) {
-            unset($this->used[$key]);
+            $this->available[$key] = $key;
             return true;
         }
         return false;
