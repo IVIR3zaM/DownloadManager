@@ -105,9 +105,9 @@ class MortalPdo implements Iterator, Countable
     public function countQuery($query, $values = null)
     {
         $count = 0;
-        $c = $this->select($query, $values, false);
+        $c = $this->selectOne($query, $values, false);
         if ($c) {
-            $count = current($c);
+            $count = intval(current($c));
         }
         return $count;
     }

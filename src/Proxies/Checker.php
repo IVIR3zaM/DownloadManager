@@ -4,9 +4,14 @@ namespace IVIR3aM\DownloadManager\Proxies;
 class Checker
 {
     /**
-     * @var int timeout of a proxy
+     * @var int connect timeout of a proxy
      */
-    private $timeout;
+    private $connectTimeout;
+
+    /**
+     * @var int fetching data from url timeout of a proxy
+     */
+    private $fetchTimeout;
 
     /**
      * @var string the url for testing the proxy
@@ -19,27 +24,44 @@ class Checker
     private $keywords;
 
     public function __construct(
-        $timeout = 5,
+        $connectTimeout = 5,
+        $fetchTimeout = 10,
         $url = 'https://www.google.com/?hl=en',
         $keywords = ['Google Search', 'Google automatically']
     ) {
-        $this->setTimeout($timeout);
+        $this->setConnectTimeout($connectTimeout);
+        $this->setFetchTimeout($fetchTimeout);
         $this->setUrl($url);
         $this->setKeywords($keywords);
     }
 
-    public function getTimeout()
+    public function getConnectTimeout()
     {
-        return $this->timeout;
+        return $this->connectTimeout;
     }
 
-    public function setTimeout($timeout)
+    public function setConnectTimeout($timeout)
     {
         $timeout = intval($timeout);
         if ($timeout < 1) {
             $timeout = 1;
         }
-        $this->timeout = $timeout;
+        $this->connectTimeout = $timeout;
+        return $this;
+    }
+
+    public function getFetchTimeout()
+    {
+        return $this->fetchTimeout;
+    }
+
+    public function setFetchTimeout($timeout)
+    {
+        $timeout = intval($timeout);
+        if ($timeout < 1) {
+            $timeout = 1;
+        }
+        $this->fetchTimeout = $timeout;
         return $this;
     }
 
@@ -95,8 +117,8 @@ class Checker
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->getUrl());
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->getTimeout() / 2);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->getTimeout() / 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->getFetchTimeout());
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->getConnectTimeout());
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_PROXY, $proxy->getIp());
@@ -124,7 +146,7 @@ class Checker
         if (!function_exists('fsockopen')) {
             throw new Exception('function fsockopen() is not exists', 1);
         }
-        $fp = fsockopen($ip, $port, $errno, $errstr, $this->getTimeout());
+        $fp = @fsockopen($ip, $port, $errno, $errstr, $this->getConnectTimeout());
         if (is_resource($fp)) {
             fclose($fp);
             return true;
