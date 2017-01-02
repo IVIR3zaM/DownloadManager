@@ -255,6 +255,10 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     {
         // TODO: must implement strategy pattern
         $this->stop($index);
+        $file = $this->getFileByIndex($index);
+        if ($file) {
+            $file->setSpeed(0);
+        }
         sleep(1);
         $this->start($index);
 //        $file = $this->getManager()->getFileByIndex($index);
