@@ -6,13 +6,14 @@ class Proxies
     protected $ip;
     protected $port;
     protected $type;
+    const UNKNOWN = 0;
     const HTTP = 1;
     const SOCKS4 = 4;
     const SOCKS5 = 5;
     const SOCKS4A = 6;
     const SOCKS5_HOSTNAME = 7;
 
-    public function __construct($ip = '0.0.0.0', $port = 0, $type = self::HTTP)
+    public function __construct($ip = '0.0.0.0', $port = 0, $type = self::UNKNOWN)
     {
         $this->setIp($ip);
         $this->setPort($port);
@@ -46,9 +47,9 @@ class Proxies
         return $this->type;
     }
 
-    public function setType($type)
+    public function getTypeCurl()
     {
-        switch ($type) {
+        switch ($this->getType()) {
             case self::SOCKS4:
                 $type = 'SOCKS4';
                 break;
@@ -70,7 +71,21 @@ class Proxies
         if (!defined($name)) {
             $name = self::class . '::' . $type;
         }
-        $this->type = constant($name);
+        return constant($name);
+    }
+
+    public function setType($type)
+    {
+        if (!in_array($type, [
+            self::HTTP,
+            self::SOCKS4,
+            self::SOCKS5,
+            self::SOCKS4A,
+            self::SOCKS5_HOSTNAME,
+        ])) {
+            $type = self::UNKNOWN;
+        }
+        $this->type = $type;
         return $this;
     }
 

@@ -269,7 +269,7 @@ class HttpClient implements SplObserver
             curl_setopt($this->ch, CURLOPT_FOLLOWLOCATION, false);
         }
         if ($this->getProxy()->isUsable()) {
-            curl_setopt($this->ch, CURLOPT_PROXYTYPE, $this->getProxy()->getType());
+            curl_setopt($this->ch, CURLOPT_PROXYTYPE, $this->getProxy()->getTypeCurl());
             curl_setopt($this->ch, CURLOPT_PROXY, $this->getProxy()->getIp() . ':' . $this->getProxy()->getPort());
         } else {
             curl_setopt($this->ch, CURLOPT_PROXY, null);

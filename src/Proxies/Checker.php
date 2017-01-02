@@ -1,6 +1,11 @@
 <?php
 namespace IVIR3aM\DownloadManager\Proxies;
 
+/**
+ * Class Checker
+ * @package IVIR3aM\DownloadManager\Proxies
+ * @todo must implement tests for all kind of proxies
+ */
 class Checker
 {
     /**
@@ -123,7 +128,7 @@ class Checker
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_PROXY, $proxy->getIp());
         curl_setopt($ch, CURLOPT_PROXYPORT, $proxy->getPort());
-        curl_setopt($ch, CURLOPT_PROXYTYPE, $proxy->getType());
+        curl_setopt($ch, CURLOPT_PROXYTYPE, $proxy->getTypeCurl());
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
         $content = curl_exec($ch);
@@ -158,6 +163,7 @@ class Checker
      * @param string $ip
      * @param int $port
      * @return bool|int the number of
+     * @todo must implement a property to define what proxy types must tested
      */
     public function checkType($ip, $port)
     {
