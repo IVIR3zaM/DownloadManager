@@ -89,8 +89,10 @@ class MortalPdo implements Iterator, Countable
     {
         $result = $this->query($this->getPdo(self::READ), $query, $values);
         $this->list = [];
-        while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $this->list[] = $object ? (object)$row : $row;
+        if ($result) {
+            while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+                $this->list[] = $object ? (object)$row : $row;
+            }
         }
         unset($result, $pdo);
         return $this->list;
