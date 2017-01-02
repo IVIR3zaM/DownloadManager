@@ -54,7 +54,7 @@ class HttpClient implements SplObserver
     const ONLY_HEAD = 1;
     const ONLY_BODY = 2;
 
-    public function __construct(Files $file, $cookieFilePath = '', $timeout = 5, $redirects = 5)
+    public function __construct(Files $file, $timeout = 60, $redirects = 5, $cookieFilePath = '')
     {
         $this->setCookieFile($cookieFilePath);
         $this->setTimeout($timeout);
