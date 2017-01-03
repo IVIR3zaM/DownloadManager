@@ -1,8 +1,8 @@
 <?php
 namespace IVIR3aM\DownloadManager\Tests;
 
-use IVIR3aM\DownloadManager\Proxies;
-use IVIR3aM\DownloadManager\Proxy;
+use IVIR3aM\DownloadManager\Proxies\Proxies;
+use IVIR3aM\DownloadManager\Proxies\Stack;
 
 /**
  * Class BasicArrayTest
@@ -11,18 +11,18 @@ use IVIR3aM\DownloadManager\Proxy;
 class ProxiesTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var Proxies
+     * @var Stack
      */
     private $proxies;
 
     /**
-     * @var Proxy
+     * @var Proxies
      */
     private $proxy;
     public function setUp()
     {
-        $this->proxy = new Proxy('127.0.0.1', '8080');
-        $this->proxies = new Proxies([$this->proxy]);
+        $this->proxy = new Proxies('127.0.0.1', '8080');
+        $this->proxies = new Stack([$this->proxy]);
     }
 
     public function testInputOutput()
@@ -35,26 +35,26 @@ class ProxiesTest extends \PHPUnit_Framework_TestCase
         $this->proxies[] = '127.0.0.1::3128';
         $this->assertCount(2, $this->proxies);
 
-        $proxy = $this->proxies->getProxy();
-        $this->assertInstanceOf(Proxy::class, $proxy);
+        $proxy = $this->proxies->getRandomProxy();
+        $this->assertInstanceOf(Proxies::class, $proxy);
         $this->assertEquals($proxy->getIp(), '127.0.0.1');
-        $this->assertCount(1, $this->proxies);
 
-        $newProxy = $this->proxies->getProxy();
+        $newProxy = $this->proxies->getRandomProxy();
         $this->assertNotEquals($proxy, $newProxy);
         $this->assertEquals($proxy->getIp(), '127.0.0.1');
-        $this->assertCount(0, $this->proxies);
-
-        $emptyProxy = $this->proxies->getProxy();
-        $this->assertEquals(new Proxy('0.0.0.0', 0), $emptyProxy);
-
-        $this->proxies->freeProxy($proxy);
-        $this->assertCount(1, $this->proxies);
-
-        $this->proxies->freeProxy($newProxy);
+        $this->assertNotEquals($proxy->getPort(), $newProxy->getPort());
         $this->assertCount(2, $this->proxies);
 
-        $this->proxies->freeProxy($emptyProxy);
+        $index = $this->proxies->getProxyIndex($proxy);
+        $this->assertNotEquals(false, $index);
+        $this->proxies[$index]->setPort(2222);
+        $this->assertEquals(2222, $proxy->getPort());
+
+        $emptyProxy = $this->proxies->getRandomProxy();
+        $this->assertEquals(new Proxies('0.0.0.0', 0), $emptyProxy);
+        $this->assertCount(2, $this->proxies);
+
+        $this->proxies->freeProxy($proxy);
         $this->assertCount(2, $this->proxies);
 
         $this->proxies[] = $emptyProxy;
@@ -64,21 +64,20 @@ class ProxiesTest extends \PHPUnit_Framework_TestCase
 
         $this->proxies[] = $emptyProxy;
         $this->assertTrue($this->proxies->useProxy($emptyProxy));
-        $this->assertCount(2, $this->proxies);
         $this->assertFalse($this->proxies->useProxy($emptyProxy));
     }
 
     public function testValidation()
     {
-        $this->assertTrue(Proxy::isValid('0.0.0.0', 0));
-        $this->assertFalse(Proxy::isValid('0.0.0.0', -1));
-        $this->assertFalse(Proxy::isValid('0.0.0.0::25', -1));
+        $this->assertTrue(Proxies::isValid('0.0.0.0', 0));
+        $this->assertFalse(Proxies::isValid('0.0.0.0', -1));
+        $this->assertFalse(Proxies::isValid('0.0.0.0::25', -1));
     }
 
     public function testUsability()
     {
         $this->assertTrue($this->proxy->isUsable());
-        $proxy = new Proxy('0.0.0.0', 0);
+        $proxy = new Proxies('0.0.0.0', 0);
         $this->assertFalse($proxy->isUsable());
     }
 }

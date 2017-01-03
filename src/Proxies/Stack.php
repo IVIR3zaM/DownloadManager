@@ -6,6 +6,7 @@ use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
 class Stack extends AbstractActiveArray
 {
     protected $available = [];
+
     protected function filterInputHook($offset, $data)
     {
         if (is_array($data)) {
@@ -42,14 +43,8 @@ class Stack extends AbstractActiveArray
 
     public function getRandomProxy()
     {
-        if (count($this) && ($key = array_rand($this->available, 1)) !== false) {
-            $proxy = $this[$key];
-            $this->useProxyByIndex($key);
-        } else {
-            $proxy = new Proxies();
-        }
-
-        return $proxy;
+        return count($this->available) && ($key = array_rand($this->available,
+            1)) !== false && $this->useProxyByIndex($key) ? $this[$key] : new Proxies();
     }
 
     public function getProxyIndex(Proxies $proxy)
@@ -86,5 +81,5 @@ class Stack extends AbstractActiveArray
         }
         return false;
     }
-    
+
 }

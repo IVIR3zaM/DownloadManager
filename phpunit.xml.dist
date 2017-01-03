@@ -16,16 +16,11 @@
     </testsuites>
     <filter>
         <whitelist>
-            <file>src/Proxies.php</file>
-            <file>src/Proxy.php</file>
+            <directory suffix=".php">src/Proxies</directory>
+            <exclude>
+                <directory suffix="Interface.php">src</directory>
+                <directory suffix="Exception.php">src</directory>
+            </exclude>
         </whitelist>
-        <!--<whitelist>-->
-            <!--<directory suffix=".php">src</directory>-->
-            <!--<exclude>-->
-                <!--<directory suffix="Interface.php">src</directory>-->
-                <!--<directory suffix="Exception.php">src</directory>-->
-                <!--&lt;!&ndash;<directory prefix="Abstract">src</directory>&ndash;&gt;-->
-            <!--</exclude>-->
-        <!--</whitelist>-->
     </filter>
 </phpunit>
