@@ -4,11 +4,12 @@ namespace IVIR3aM\DownloadManager\Files;
 use IVIR3aM\ObjectArrayTools\AbstractActiveArray;
 use IVIR3aM\DownloadManager\Proxies\Proxies;
 use IVIR3aM\DownloadManager\HttpClient\HttpClient;
+use IVIR3aM\DownloadManager\HttpClient\FilesInterface as HttpClientFiles;
 use SplSubject;
 use SplObserver;
 use SplObjectStorage;
 
-class Files extends AbstractActiveArray implements SplSubject
+class Files extends AbstractActiveArray implements SplSubject, HttpClientFiles
 {
     const FIELDS = ['link', 'size', 'maxSpeed', 'speed', 'position', 'headers', 'running', 'active', 'proxy', 'client', 'wait'];
     const INTEGER_FIELDS = ['size', 'maxSpeed', 'position', 'speed'];

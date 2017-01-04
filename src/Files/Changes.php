@@ -1,7 +1,9 @@
 <?php
 namespace IVIR3aM\DownloadManager\Files;
 
-class Changes
+use IVIR3aM\DownloadManager\HttpClient\FilesChangesInterface as HttpClientFilesChanges;
+
+class Changes implements HttpClientFilesChanges
 {
     const INNER = 0;
     const OUTER = 1;

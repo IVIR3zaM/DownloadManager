@@ -1,9 +1,6 @@
 <?php
 namespace IVIR3aM\DownloadManager\HttpClient;
 
-use IVIR3aM\DownloadManager\Files\Changes as FilesChanges;
-use IVIR3aM\DownloadManager\Files\Files;
-use IVIR3aM\DownloadManager\Proxies\Proxies;
 use IVIR3aM\DownloadManager\StaticUserAgents;
 use IVIR3aM\DownloadManager\TimeoutHolderTrait;
 use SplObserver;
@@ -13,7 +10,7 @@ class HttpClient implements SplObserver
 {
     use TimeoutHolderTrait;
     /**
-     * @var Files
+     * @var FilesInterface
      */
     private $file;
 
@@ -51,7 +48,7 @@ class HttpClient implements SplObserver
     const ONLY_HEAD = 1;
     const ONLY_BODY = 2;
 
-    public function __construct(Files $file, $connectTimeout = 5, $fetchTimeout = 60, $redirects = 5, $cookieFilePath = '')
+    public function __construct(FilesInterface $file, $connectTimeout = 5, $fetchTimeout = 60, $redirects = 5, $cookieFilePath = '')
     {
         $this->setCookieFile($cookieFilePath);
         $this->setConnectTimeout($connectTimeout);
@@ -127,7 +124,7 @@ class HttpClient implements SplObserver
         return $this->file;
     }
 
-    public function setFile(Files $file)
+    public function setFile(FilesInterface $file)
     {
         $this->file = $file;
         $this->setLink($file->getLink());
@@ -137,9 +134,9 @@ class HttpClient implements SplObserver
 
     public function update(SplSubject $subject)
     {
-        if ($subject instanceof Files) {
+        if (is_a($subject, FilesInterface::class)) {
             $change = $subject->getData();
-            if ($change instanceof FilesChanges && $change->getField() == 'link') {
+            if (is_a($change, FilesChangesInterface::class) && $change->getField() == 'link') {
                 $this->setLink($change->getValue());
             }
         }
@@ -158,7 +155,11 @@ class HttpClient implements SplObserver
 
     public function getProxy()
     {
-        return $this->getFile()->getProxy();
+        $proxy = $this->getFile()->getProxy();
+        if (!is_a($proxy, ProxyInterface::class)) {
+            throw new Exception('invalid proxy object returned', 5);
+        }
+        return $proxy;
     }
 
     public function getRedirects()

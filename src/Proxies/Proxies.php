@@ -1,7 +1,9 @@
 <?php
 namespace IVIR3aM\DownloadManager\Proxies;
 
-class Proxies
+use IVIR3aM\DownloadManager\HttpClient\ProxyInterface as HttpClientProxy;
+
+class Proxies implements HttpClientProxy
 {
     protected $ip;
     protected $port;
