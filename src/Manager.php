@@ -177,13 +177,13 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
                 $file->setProxy($this->getRandomProxy());
             }
             if (!$file->getClient()) {
-                // TODO: must set timeout and connection timeout here
                 $file->setClient(new HttpClient($file, $this->getConnectTimeout(), $this->getFetchTimeout()));
                 try {
                     $this->fetchFileInfo($file);
                 } catch (HttpClientException $e) {
-                    $this->freeProxy($file->getProxy());
+                    $proxy = $file->getProxy();
                     $file->setProxy($this->getRandomProxy());
+                    $this->freeProxy($proxy);
                     try {
                         $this->fetchFileInfo($file);
                     } catch (HttpClientException $e) {}
@@ -355,7 +355,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     public function getRandomProxy()
     {
-        return $this->getProxies() ? $this->getProxies()->getRandomProxy() : new Proxy();
+        return $this->getProxies() ? $this->getProxies()->getRandomProxy() : new Proxies();
     }
 
     public function freeProxy(Proxies $proxy)
