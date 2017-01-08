@@ -84,6 +84,11 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
      */
     private $packetSize = 1048576; // equal to 1MB
 
+    /**
+     * @var bool the system work without a valid proxy or not
+     */
+    private $workDirect = true;
+
     public function __construct(array $data = array())
     {
         $this->active = false;
@@ -170,26 +175,47 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return $this->active;
     }
 
+    public function setWorkDirect($workDirect = true)
+    {
+        $this->workDirect = boolval($workDirect);
+    }
+
+    public function getWorkDirect()
+    {
+        return $this->workDirect;
+    }
+
+    private function setNewProxyToFile(Files $file)
+    {
+        $proxy = $file->getProxy();
+        $file->setProxy($this->getRandomProxy());
+        $this->freeProxy($proxy);
+        return $file->getProxy()->isUsable() || $this->getWorkDirect();
+    }
+
     private function initializeFile(Files $file)
     {
         if (!$file->getRunning() && $file->getActive()) {
-            if (!$file->getProxy()->isUsable()) {
-                $file->setProxy($this->getRandomProxy());
+            if (!$file->getProxy()->isUsable() && !$this->setNewProxyToFile($file)) {
+                return false;
             }
             if (!$file->getClient()) {
                 $file->setClient(new HttpClient($file, $this->getConnectTimeout(), $this->getFetchTimeout()));
                 try {
                     $this->fetchFileInfo($file);
                 } catch (HttpClientException $e) {
-                    $proxy = $file->getProxy();
-                    $file->setProxy($this->getRandomProxy());
-                    $this->freeProxy($proxy);
+                    if (!$this->setNewProxyToFile($file)) {
+                        return false;
+                    }
                     try {
                         $this->fetchFileInfo($file);
-                    } catch (HttpClientException $e) {}
+                    } catch (HttpClientException $e) {
+                        return false;
+                    }
                 }
             }
         }
+        return true;
     }
 
     private function fetchFileInfo(Files $file)
@@ -277,7 +303,10 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         if (!$file) {
             return false;
         }
-        $this->initializeFile($file);
+
+        if (!$this->initializeFile($file)) {
+            return null;
+        }
         if ($this->getSpeed() < $this->getMaxSpeed()) {
             if ($file->getWaiting()) {
                 $file->setWaiting(false);
