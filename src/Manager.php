@@ -85,9 +85,13 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     private $packetSize = 1048576; // equal to 1MB
 
     /**
-     * @var bool the system work without a valid proxy or not
+     * @var int the system work with and without a valid proxy
      */
-    private $workDirect = true;
+    private $workRule = 3;
+
+    const WORK_DIRECT = 1;
+
+    const WORK_PROXY = 2;
 
     public function __construct(array $data = array())
     {
@@ -175,28 +179,58 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         return $this->active;
     }
 
-    public function setWorkDirect($workDirect = true)
+    public function setWorkRule($workRule)
     {
-        $this->workDirect = boolval($workDirect);
+        $this->workRule = intval($workRule);
+    }
+
+    public function getWorkRule()
+    {
+        return $this->workRule;
+    }
+
+    public function setWorkDirect($work = true)
+    {
+        $this->workRule = $work ? $this->workRule | static::WORK_DIRECT : $this->workRule & ~static::WORK_DIRECT;
     }
 
     public function getWorkDirect()
     {
-        return $this->workDirect;
+        return $this->workRule & static::WORK_DIRECT === static::WORK_DIRECT;
     }
 
-    private function setNewProxyToFile(Files $file)
+    public function setWorkProxy($work = true)
     {
+        $this->workRule = $work ? $this->workRule | static::WORK_PROXY : $this->workRule & ~static::WORK_PROXY;
+    }
+
+    public function getWorkProxy()
+    {
+        return $this->workRule & static::WORK_PROXY === static::WORK_PROXY;
+    }
+
+    private function setNewProxyToFile(Files $file, $force = false)
+    {
+        $result = false;
         $proxy = $file->getProxy();
-        $file->setProxy($this->getRandomProxy());
+        if ($this->getWorkProxy()) {
+            if (!$force && $proxy->isUsable()) {
+                return true;
+            }
+            $file->setProxy($this->getRandomProxy());
+            $result = $file->getProxy()->isUsable() || $this->getWorkDirect();
+        } else if($this->getWorkDirect()) {
+            $result = true;
+            $file->setProxy(new Proxies());
+        }
         $this->freeProxy($proxy);
-        return $file->getProxy()->isUsable() || $this->getWorkDirect();
+        return $result;
     }
 
     private function initializeFile(Files $file)
     {
         if (!$file->getRunning() && $file->getActive()) {
-            if (!$file->getProxy()->isUsable() && !$this->setNewProxyToFile($file)) {
+            if (!$this->setNewProxyToFile($file)) {
                 return false;
             }
             if (!$file->getClient()) {
@@ -204,7 +238,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
                 try {
                     $this->fetchFileInfo($file);
                 } catch (HttpClientException $e) {
-                    if (!$this->setNewProxyToFile($file)) {
+                    if (!$this->setNewProxyToFile($file, true)) {
                         return false;
                     }
                     try {
@@ -226,7 +260,8 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         $head = $file->getClient()->getInfo();
         if (isset($head['http_code']) && $head['http_code'] == 200 &&
             isset($head['download_content_length']) && $head['download_content_length'] >= 0 &&
-            $file->getSize() != $head['download_content_length']) {
+            $file->getSize() != $head['download_content_length']
+        ) {
             $file->setSize($head['download_content_length']);
         }
     }

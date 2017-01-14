@@ -10,6 +10,12 @@ use IVIR3aM\DownloadManager\TimeoutHolderTrait;
 class Checker
 {
     use TimeoutHolderTrait;
+
+    /**
+     * @var int the minimum download speed of proxy in Bytes per Seconds
+     */
+    private $minSpeed;
+
     /**
      * @var string the url for testing the proxy
      */
@@ -23,13 +29,30 @@ class Checker
     public function __construct(
         $connectTimeout = 5,
         $fetchTimeout = 10,
+        $minSpeed = 100000,
         $url = 'https://www.google.com/?hl=en',
         $keywords = ['Google Search', 'Google automatically']
     ) {
         $this->setConnectTimeout($connectTimeout);
         $this->setFetchTimeout($fetchTimeout);
+        $this->setMinSpeed($minSpeed);
         $this->setUrl($url);
         $this->setKeywords($keywords);
+    }
+
+    public function getMinSpeed()
+    {
+        return $this->minSpeed;
+    }
+
+    /**
+     * @param int $speed
+     * @return $this
+     */
+    public function setMinSpeed($speed)
+    {
+        $this->minSpeed = intval($speed);
+        return $this;
     }
 
     public function getUrl()
@@ -94,10 +117,12 @@ class Checker
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
         $content = curl_exec($ch);
+        $head = curl_getinfo($ch);
         curl_close($ch);
         foreach($this->getKeywords() as $keyword) {
             if (stripos($content, $keyword) !== false) {
-                return true;
+                echo "- {$proxy->getIp()}:{$proxy->getPort()} => speed is: {$head['speed_download']}\n";
+                return !isset($head['speed_download']) || ($head['speed_download'] >= $this->getMinSpeed());
             }
         }
         return false;
