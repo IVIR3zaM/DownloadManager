@@ -121,7 +121,6 @@ class Checker
         curl_close($ch);
         foreach($this->getKeywords() as $keyword) {
             if (stripos($content, $keyword) !== false) {
-                echo "- {$proxy->getIp()}:{$proxy->getPort()} => speed is: {$head['speed_download']}\n";
                 return !isset($head['speed_download']) || ($head['speed_download'] >= $this->getMinSpeed());
             }
         }
