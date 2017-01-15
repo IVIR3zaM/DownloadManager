@@ -87,14 +87,19 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     /**
      * @var int the system work with and without a valid proxy
      */
-    private $workRule = 3;
+    private $workRule;
 
     const WORK_DIRECT = 1;
 
     const WORK_PROXY = 2;
 
+    const WORK_NONE = 0;
+
+    const WORK_ALL = 3;
+
     public function __construct(array $data = array())
     {
+        $this->setWorkRule(static::WORK_ALL);
         $this->active = false;
         $this->observers = new SplObjectStorage();
         parent::__construct($data);
@@ -172,6 +177,11 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
     public function setActive($active = true)
     {
         $this->active = boolval($active);
+        if ($this->active) {
+            $this->start();
+        } else {
+            $this->stop();
+        }
     }
 
     public function getActive()
@@ -191,22 +201,22 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
 
     public function setWorkDirect($work = true)
     {
-        $this->workRule = $work ? $this->workRule | static::WORK_DIRECT : $this->workRule & ~static::WORK_DIRECT;
+        $this->setWorkRule($work ? $this->getWorkRule() | static::WORK_DIRECT : $this->getWorkRule() & ~static::WORK_DIRECT);
     }
 
     public function getWorkDirect()
     {
-        return $this->workRule & static::WORK_DIRECT === static::WORK_DIRECT;
+        return ($this->getWorkRule() & static::WORK_DIRECT) === static::WORK_DIRECT;
     }
 
     public function setWorkProxy($work = true)
     {
-        $this->workRule = $work ? $this->workRule | static::WORK_PROXY : $this->workRule & ~static::WORK_PROXY;
+        $this->setWorkRule($work ? $this->getWorkRule() | static::WORK_PROXY : $this->getWorkRule() & ~static::WORK_PROXY);
     }
 
     public function getWorkProxy()
     {
-        return $this->workRule & static::WORK_PROXY === static::WORK_PROXY;
+        return ($this->getWorkRule() & static::WORK_PROXY) === static::WORK_PROXY;
     }
 
     private function setNewProxyToFile(Files $file, $force = false)
@@ -292,12 +302,19 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
         if (is_null($index)) {
             $result = true;
             foreach ($this->getFilesIndexes() as $index) {
-                if ($this->getThreadsManager()->stop($index, $running) === false) {
+                if (!$this->stop($index, $running)) {
                     $result = false;
                 }
             }
         } else {
-            $result = $this->getThreadsManager()->stop($index, $running);
+            $result = false;
+            $file = $this->getFileByIndex($index);
+            if ($file) {
+                $result = $this->getThreadsManager()->stop($index, $running);
+                if ($result && $file->getSpeed() > 0) {
+                    $file->setSpeed(0);
+                }
+            }
         }
         return boolval($result);
     }
@@ -339,14 +356,13 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             return false;
         }
 
-        if (!$this->initializeFile($file)) {
-            return null;
-        }
-        if ($this->getSpeed() < $this->getMaxSpeed()) {
-            if ($file->getWaiting()) {
-                $file->setWaiting(false);
+        if ($this->initializeFile($file)) {
+            if ($this->getSpeed() < $this->getMaxSpeed()) {
+                if ($file->getWaiting()) {
+                    $file->setWaiting(false);
+                }
+                return $this->getThreadsManager()->start($index);
             }
-            return $this->getThreadsManager()->start($index);
         }
         $this->stop($index);
         if (!$file->getWaiting()) {

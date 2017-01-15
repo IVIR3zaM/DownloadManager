@@ -10,6 +10,9 @@
          stopOnFailure="false"
          bootstrap="./tests/bootstrap.php">
     <testsuites>
+        <testsuite name="Manager">
+            <file>tests/ManagerTest.php</file>
+        </testsuite>
         <testsuite name="Proxies">
             <file>tests/ProxiesTest.php</file>
         </testsuite>

@@ -5,8 +5,8 @@ use IVIR3aM\DownloadManager\Proxies\Proxies;
 use IVIR3aM\DownloadManager\Proxies\Stack;
 
 /**
- * Class BasicArrayTest
- * @package IVIR3aM\ObjectArrayTools\Tests
+ * Class ProxiesTest
+ * @package IVIR3aM\DownloadManager\Tests
  */
 class ProxiesTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,7 +27,7 @@ class ProxiesTest extends \PHPUnit_Framework_TestCase
 
     public function testInputOutput()
     {
-        $this->assertEquals($this->proxy->getPort(), 8080);
+        $this->assertEquals(8080, $this->proxy->getPort());
         
         $this->proxies[] = ['127.0.0.1', '3128'];
         $this->assertCount(2, $this->proxies);
@@ -37,16 +37,16 @@ class ProxiesTest extends \PHPUnit_Framework_TestCase
 
         $proxy = $this->proxies->getRandomProxy();
         $this->assertInstanceOf(Proxies::class, $proxy);
-        $this->assertEquals($proxy->getIp(), '127.0.0.1');
+        $this->assertEquals('127.0.0.1', $proxy->getIp());
 
         $newProxy = $this->proxies->getRandomProxy();
         $this->assertNotEquals($proxy, $newProxy);
-        $this->assertEquals($proxy->getIp(), '127.0.0.1');
+        $this->assertEquals('127.0.0.1', $proxy->getIp());
         $this->assertNotEquals($proxy->getPort(), $newProxy->getPort());
         $this->assertCount(2, $this->proxies);
 
         $index = $this->proxies->getProxyIndex($proxy);
-        $this->assertNotEquals(false, $index);
+        $this->assertNotFalse($index);
         $this->proxies[$index]->setPort(2222);
         $this->assertEquals(2222, $proxy->getPort());
 
