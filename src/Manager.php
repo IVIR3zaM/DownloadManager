@@ -340,7 +340,7 @@ class Manager extends AbstractActiveArray implements SplObserver, SplSubject
             $file->setSpeed(0);
             $file->setProxy($this->getRandomProxy());
         }
-        sleep(1);
+//        sleep(1);
         $this->start($index);
 //        $file = $this->getManager()->getFileByIndex($index);
 //        if ($this->fileIsValid($file)) {

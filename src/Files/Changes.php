@@ -2,8 +2,9 @@
 namespace IVIR3aM\DownloadManager\Files;
 
 use IVIR3aM\DownloadManager\HttpClient\FilesChangesInterface as HttpClientFilesChanges;
+use Serializable;
 
-class Changes implements HttpClientFilesChanges
+class Changes implements HttpClientFilesChanges, Serializable
 {
     const INNER = 0;
     const OUTER = 1;
@@ -48,5 +49,34 @@ class Changes implements HttpClientFilesChanges
     public function getOldValue()
     {
         return $this->oldValue;
+    }
+
+    public function serialize()
+    {
+        return serialize([
+            'type' => $this->type,
+            'field' => $this->field,
+            'value' => $this->value,
+            'oldValue' => $this->oldValue,
+        ]);
+    }
+
+    public function unserialize($serialized)
+    {
+        $list = unserialize($serialized);
+        if (is_array($list)) {
+            if (isset($list['type'])) {
+                $this->type = $list['type'];
+            }
+            if (isset($list['field'])) {
+                $this->field = $list['field'];
+            }
+            if (isset($list['value'])) {
+                $this->value = $list['value'];
+            }
+            if (isset($list['oldValue'])) {
+                $this->oldValue = $list['oldValue'];
+            }
+        }
     }
 }
