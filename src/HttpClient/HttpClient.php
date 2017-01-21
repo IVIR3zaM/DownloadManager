@@ -12,37 +12,37 @@ class HttpClient implements SplObserver
     /**
      * @var FilesInterface
      */
-    private $file;
+    protected $file;
 
     /**
      * @var string
      */
-    private $cookieFile;
+    protected $cookieFile;
 
     /**
      * @var int
      */
-    private $redirects;
+    protected $redirects;
 
     /**
      * @var string
      */
-    private $userAgent;
+    protected $userAgent;
 
     /**
      * @var resource
      */
-    private $ch;
+    protected $ch;
 
     /**
      * @var string
      */
-    private $link;
+    protected $link;
 
     /**
      * @var int
      */
-    private $state;
+    protected $state;
 
     const BOTH = 0;
     const ONLY_HEAD = 1;
@@ -105,7 +105,7 @@ class HttpClient implements SplObserver
      * @param $link string
      * @return void
      */
-    private function setLink($link)
+    protected function setLink($link)
     {
         $link = static::sanitizeLink($link);
         if (!$link) {
@@ -299,7 +299,7 @@ class HttpClient implements SplObserver
     }
 
 
-    private function prepareHeaders($header = array())
+    protected function prepareHeaders($header = array())
     {
         $ret = [];
         if (!is_array($header)) {
@@ -326,6 +326,13 @@ class HttpClient implements SplObserver
 
     public function __destruct()
     {
-        curl_close($this->ch);
+        if (is_resource($this->ch)) {
+            curl_close($this->ch);
+        }
+    }
+
+    public function __wakeup()
+    {
+        $this->ch = curl_init();
     }
 }
