@@ -9,6 +9,12 @@ use SplSubject;
 class HttpClient implements SplObserver
 {
     use TimeoutHolderTrait;
+
+    /**
+     * @var string
+     */
+    protected $interface = '';
+
     /**
      * @var FilesInterface
      */
@@ -117,6 +123,21 @@ class HttpClient implements SplObserver
     public function getLink()
     {
         return $this->link;
+    }
+
+    /**
+     * @param string $interface
+     * @return $this
+     */
+    public function setInterface($interface)
+    {
+        $this->interface = $interface;
+        return $this;
+    }
+
+    public function getInterface()
+    {
+        return $this->interface;
     }
 
     public function getFile()
@@ -257,6 +278,9 @@ class HttpClient implements SplObserver
             curl_setopt($this->ch, CURLOPT_PROXY, $this->getProxy()->getIp() . ':' . $this->getProxy()->getPort());
         } else {
             curl_setopt($this->ch, CURLOPT_PROXY, null);
+        }
+        if ($this->getInterface()) {
+            curl_setopt($this->ch, CURLOPT_INTERFACE, $this->getInterface());
         }
         return $this->ch;
     }
